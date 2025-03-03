@@ -1,6 +1,6 @@
 • Restful-Booker API Testing Project written using REST Assured and POM Design Pattern  
   
-• Follow these Steps to Run Test on your Machine:  
+• Follow these Steps to Run Test:  
   
 1) Clone the Repository  
 2) Open the Project in an IDE  
