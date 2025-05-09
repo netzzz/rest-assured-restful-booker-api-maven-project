@@ -1,4 +1,4 @@
-target
-test-output
-test_logs
-test-reports
+target/
+test-output/
+test_logs/
+test-reports/
