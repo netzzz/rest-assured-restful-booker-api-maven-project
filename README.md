@@ -64,7 +64,7 @@ It ensures each operation returns the expected HTTP status code and correctly re
   
 1. RestfulBookerRegressionSuite
   
-The TestNG suite RestfulBookerRegressionSuite is designed to execute all Test Cases for the Chuck Norris API.
+The TestNG suite RestfulBookerRegressionSuite is designed to execute all Test Cases for the Restful Booker API.
   
 ## Instructions to Execute the Test Suite:  
   
