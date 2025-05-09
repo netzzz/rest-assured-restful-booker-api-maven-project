@@ -2,139 +2,77 @@ package testmethods;
 
 import static io.restassured.RestAssured.given;
 import io.restassured.RestAssured;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import pojo.requests.AuthenticationRequestBody;
+import pojo.requests.PartiallyUpdateBookingRequestBody;
+import pojo.requests.createupdatebooking.CreateBookingRequestBody;
+import pojo.responses.AuthenticationResponseBody;
+import pojo.responses.createbooking.BookingInCreateBookingResponseBody;
+import pojo.responses.createbooking.CreateBookingResponseBody;
 
 import org.testng.Assert;
 
+import data.BookingState;
+import data.FirstNameLastName;
 import data.HttpResponseStatusCodes;
-import data.RestfulBookerData;
 import helperfunctions.HelperFunctions;
 
+
 public class RestfulBookerTestMethods {
-	private static final Logger logger = LogManager.getLogger(RestfulBookerTestMethods.class.getName());
 	private static String baseURI = "https://restful-booker.herokuapp.com";
 
-	// --------------------------------
-	// Authentication Methods
-
-	public static Response sendAuthenticationRequest(String username, String password) {
+	public static Response sendAuthenticationRequest(AuthenticationRequestBody authenticationRequestBody) {
 		RestAssured.baseURI = baseURI;
-
+		
 		return given().header("Content-Type", "application/json")
-				.body(RestfulBookerData.authenticationRequestBody(username, password)).when().post("auth").then()
+				.body(authenticationRequestBody).when().post("auth").then()
 				.extract().response();
 	}
-
-	public static void validateAuthenticationResponse(Response authentication) {
-		Assert.assertEquals(authentication.getStatusCode(), HttpResponseStatusCodes.OK.getCode(), String
-				.format("Authentication Response Status Code is %d as Not Expected", authentication.getStatusCode()));
-		logger.info(String.format("Authentication Response Status Code is %d as Expected",
-				HttpResponseStatusCodes.OK.getCode()));
+	
+	public static String getAuthenticationTokenFromResponse(Response authentication) {
+		AuthenticationResponseBody authenticationResponseBody = authentication.as(AuthenticationResponseBody.class);
+		return authenticationResponseBody.getToken();
 	}
 
-	public static String getAuthenticationToken(Response authentication) {
-		JsonPath authenticationResponseJson = HelperFunctions.convertRestAssuredResponseToJson(authentication);
-		return authenticationResponseJson.getString("token");
-	}
-
-	// --------------------------------
-	// Create Booking Methods
-
-	public static Response createBooking(String firstName, String lastName, double totalPrice, boolean isDepositPaid,
-			String checkIn, String checkOut, String additionalNeeds) {
+	public static Response createBooking(CreateBookingRequestBody createBookingRequestBody) {
 		RestAssured.baseURI = baseURI;
-
+		
 		return given().header("Content-Type", "application/json")
-				.body(RestfulBookerData.createUpdateBookingRequestBody(firstName, lastName, totalPrice, isDepositPaid,
-						checkIn, checkOut, additionalNeeds))
+				.body(createBookingRequestBody)
 				.when().post("booking").then().extract().response();
 	}
 
-	public static void validateCreateBooking(Response createBooking) {
-		Assert.assertEquals(createBooking.getStatusCode(), HttpResponseStatusCodes.OK.getCode(), String
-				.format("Create Booking Response Status Code is '%d' as Not Expected", createBooking.getStatusCode()));
-		logger.info(String.format("Create Booking Response Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.OK.getCode()));
+	public static int getIdOfCreatedBooking(Response createBooking) {
+		CreateBookingResponseBody createBookingResponseBody = createBooking.as(CreateBookingResponseBody.class);
+		return createBookingResponseBody.getBookingId();
 	}
 
-	public static int getCreatedBookingId(Response createBooking) {
-		JsonPath createBookingResponseJson = HelperFunctions.convertRestAssuredResponseToJson(createBooking);
-		return createBookingResponseJson.getInt("bookingid");
-	}
-
-	// --------------------------------
-	// Get Booking by Id Methods
 
 	public static Response getBookingById(int bookingId) {
 		return given().pathParam("id", bookingId).when().get("booking/{id}").then().extract().response();
 	}
 
-	public static void validateGetBookingById(Response getBookingById, String firstName, String lastName) {
-		Assert.assertEquals(getBookingById.getStatusCode(), HttpResponseStatusCodes.OK.getCode(), String.format(
-				"Get Booking By Id Response Status Code is '%d' as Not Expected", getBookingById.getStatusCode()));
-		logger.info(String.format("Get Booking By Id Response Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.OK.getCode()));
 
-		JsonPath getBookingByIdJson = HelperFunctions.convertRestAssuredResponseToJson(getBookingById);
-
-		String firstNameFromRetrievedBooking = getBookingByIdJson.getString("firstname");
-		Assert.assertEquals(firstNameFromRetrievedBooking, firstName, String.format(
-				"'firstname' in Booking retrieved By Id is '%s' as Not Expected", firstNameFromRetrievedBooking));
-		logger.info(String.format("'firstname' in Booking retrieved By Id is '%s' as Expected", firstName));
-
-		String lastNameFromRetrievedBooking = getBookingByIdJson.getString("lastname");
-		Assert.assertEquals(lastNameFromRetrievedBooking, lastName, String
-				.format("'lastname' in Booking retrieved By Id is '%s' as Not Expected", lastNameFromRetrievedBooking));
-		logger.info(String.format("'lastname' in Booking retrieved By Id is '%s' as Expected", lastName));
-	}
-
-	// --------------------------------
-	// Update Booking using Put Methods
-
-	public static Response updateBookingUsingPut(int bookingId, String authenticationToken, String firstName,
-			String lastName, double totalPrice, boolean isDepositPaid, String checkIn, String checkOut,
-			String additionalNeeds) {
+	public static Response updateBooking(int bookingId, String authenticationToken, 
+			CreateBookingRequestBody updateBookingRequestBody) {
+		
 		return given().pathParam("id", bookingId).header("Content-Type", "application/json")
 				.header("Cookie", "token=" + authenticationToken)
-				.body(RestfulBookerData.createUpdateBookingRequestBody(firstName, lastName, totalPrice, isDepositPaid,
-						checkIn, checkOut, additionalNeeds))
+				.body(updateBookingRequestBody)
 				.when().put("booking/{id}").then().extract().response();
 	}
 
-	public static void validateUpdateBookingUsingPut(Response updateBookingUsingPutResponse) {
-		Assert.assertEquals(updateBookingUsingPutResponse.getStatusCode(), HttpResponseStatusCodes.OK.getCode(),
-				String.format("Update Booking Using Put Status Code is '%d' as Not Expected",
-						updateBookingUsingPutResponse.getStatusCode()));
-		logger.info(String.format("Update Booking Using Put Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.OK.getCode()));
-	}
 
-	// --------------------------------
-	// Partially Update Booking using Patch Methods
-
-	public static Response partiallyUpdateBookingUsingPatch(int bookingId, String authenticationToken, String firstName,
-			String lastName) {
+	public static Response partiallyUpdateBooking(int bookingId, String authenticationToken, 
+			PartiallyUpdateBookingRequestBody partialUpdateBookingRequestBody) {
+		
 		return given().pathParam("id", bookingId).header("Content-Type", "application/json")
 				.header("Cookie", "token=" + authenticationToken)
-				.body(RestfulBookerData.partialUpdateBookingRequestBody(firstName, lastName)).when()
+				.body(partialUpdateBookingRequestBody).when()
 				.patch("booking/{id}").then().extract().response();
 	}
 
-	public static void validatePartiallyUpdateBookingUsingPatch(Response partiallyUpdateBookingUsingPatchResponse) {
-		Assert.assertEquals(partiallyUpdateBookingUsingPatchResponse.getStatusCode(),
-				HttpResponseStatusCodes.OK.getCode(),
-				String.format("Partially Update Booking Using Patch Status Code is '%d' as Not Expected",
-						partiallyUpdateBookingUsingPatchResponse.getStatusCode()));
-		logger.info(String.format("Partially Update Booking Using Patch Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.OK.getCode()));
-	}
-
-	// --------------------------------
-	// Delete Booking Methods
 
 	public static Response deleteBooking(int bookingId, String authenticationToken) {
 		return given().pathParam("id", bookingId).header("Content-Type", "application/json")
@@ -142,18 +80,32 @@ public class RestfulBookerTestMethods {
 				.response();
 	}
 
-	public static void validateDeleteBooking(Response deleteBooking) {
-		Assert.assertEquals(deleteBooking.getStatusCode(), HttpResponseStatusCodes.CREATED.getCode(), String
-				.format("Delete Booking Response Status Code is '%d' as Not Expected", deleteBooking.getStatusCode()));
-		logger.info(String.format("Delete Booking Response Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.CREATED.getCode()));
-	}
 
-	public static void validateGetDeletedBooking(Response getDeletedBooking) {
-		Assert.assertEquals(getDeletedBooking.getStatusCode(), HttpResponseStatusCodes.NOTFOUND.getCode(),
-				String.format("Get Deleted Booking Response Status Code is '%d' as Not Expected",
-						getDeletedBooking.getStatusCode()));
-		logger.info(String.format("Get Deleted Booking Response Status Code is '%d' as Expected",
-				HttpResponseStatusCodes.NOTFOUND.getCode()));
+	public static void validateStatusCodeOfResponse(String requestName, Response response, 
+			HttpResponseStatusCodes expectedResponseStatusCode) {
+		Assert.assertEquals(response.getStatusCode(), expectedResponseStatusCode.getCode(),
+				String.format("Status Code for %s Request is %d as Not Expected", requestName, response.getStatusCode()));
+		HelperFunctions.logToReportAndLog4j(String.format("Status Code for %s Request is %d as Expected", requestName,
+				expectedResponseStatusCode.getCode()));
+	}
+	
+	public static void validateFirstNameAndLastNameForBooking(Response getBookingResponse, BookingState bookingState, 
+			FirstNameLastName firstNameLastName) {
+		BookingInCreateBookingResponseBody booking = getBookingResponse.as(BookingInCreateBookingResponseBody.class);
+		String firstName = firstNameLastName.getFirstName();
+		String lastName = firstNameLastName.getLastName();
+		
+		String firstNameFromRetrievedBooking = booking.getFirstName();
+		Assert.assertEquals(firstNameFromRetrievedBooking, firstName, String.format(
+				"'firstname' in %s Booking is '%s' as Not Expected", bookingState.getState(), firstNameFromRetrievedBooking));
+		HelperFunctions.logToReportAndLog4j(String.format("'firstname' in %s Booking is '%s' as Expected", 
+				bookingState.getState(), firstName));
+
+		String lastNameFromRetrievedBooking = booking.getLastName();
+		Assert.assertEquals(lastNameFromRetrievedBooking, lastName, 
+				String.format("'lastname' in %s Booking is '%s' as Not Expected", bookingState.getState(), 
+						lastNameFromRetrievedBooking));
+		HelperFunctions.logToReportAndLog4j(String.format("'lastname' in %s Booking is '%s' as Expected", 
+				bookingState.getState(), lastName));
 	}
 }

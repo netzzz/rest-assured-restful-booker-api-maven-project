@@ -1,2 +1,4 @@
-/target/
+target
 test-output
+test_logs
+test-reports

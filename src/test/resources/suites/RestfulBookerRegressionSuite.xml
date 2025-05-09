@@ -1,0 +1,11 @@
+<!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
+<suite name="RestfulBookerRegressionSuite" >
+	<listeners>
+        <listener class-name="helperfunctions.TestListener"/>
+    </listeners>
+    <test name="RestfulBookerRegressionSuite">
+        <classes>
+            <class name="tests.RestfulBookerTests"/>
+        </classes>
+    </test>
+</suite>
