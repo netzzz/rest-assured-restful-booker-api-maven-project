@@ -17,7 +17,7 @@ import testmethods.RestfulBookerTestMethods;
 
 public class RestfulBookerTests {
 	@Test
-	public void restfulBookerEndToEndValidation() throws Exception{
+	public void endToEndValidation() throws Exception{
 		AuthenticationData authenticationData = new AuthenticationData("admin", "5AJY0WtOurmyT0rFD61A7w==");
 		AuthenticationRequestBody authenticationRequestBody = new AuthenticationRequestBody(authenticationData);
 		Response authentication = RestfulBookerTestMethods.sendAuthenticationRequest(authenticationRequestBody);
